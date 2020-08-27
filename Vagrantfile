@@ -32,9 +32,15 @@ Vagrant.configure("2") do |config|
             docker ps
             kubectl get namespace
         SHELL
-        
-        master.vm.provision "nexus", type:"shell", path: "./nexus/nexus-installer.sh"
+
         master.vm.provision "jenkins", type:"shell", path: "./jenkins/jenkins-installer.sh"
+        master.vm.provision "check-jenkins", type:"shell", inline: <<-SHELL
+            kubectl get pods --namespace jenkins
+            # curl http://192.168.50.10:32000
+            # kubectl logs jenkins-deployment-45345423412-k9003 --namespace jenkins
+        SHELL
+
+        master.vm.provision "nexus", type:"shell", path: "./nexus/nexus-installer.sh"
             
     end
 
