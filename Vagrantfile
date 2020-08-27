@@ -3,6 +3,7 @@ N = 2
 
 Vagrant.configure("2") do |config|
     config.ssh.insert_key = false
+    config.vm.usable_port_range = 2200..65535
 
     config.vm.provider "virtualbox" do |v|
         v.memory = 1024
@@ -19,6 +20,22 @@ Vagrant.configure("2") do |config|
                 node_ip: "192.168.50.10",
             }
         end
+
+        master.vm.provision "kube-config", type:"shell", inline: <<-SHELL
+            mkdir -p $HOME/.kube
+            sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+            sudo chown $(id -u):$(id -g) $HOME/.kube/config
+        SHELL
+
+        master.vm.provision "check", type:"shell", inline: <<-SHELL
+            kubectl version -o json
+            docker ps
+            kubectl get namespace
+        SHELL
+        
+        master.vm.provision "nexus", type:"shell", path: "./nexus/nexus-installer.sh"
+        master.vm.provision "jenkins", type:"shell", path: "./jenkins/jenkins-installer.sh"
+            
     end
 
     (1..N).each do |i|
